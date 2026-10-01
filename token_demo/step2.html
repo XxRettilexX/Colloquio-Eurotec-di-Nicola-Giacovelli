@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>Step 2</title>
+</head>
+<body>
+  <form id="f" method="get">
+    <input type="hidden" name="t" id="t">
+    <button formaction="step3.html">Avanti</button>
+    <button formaction="form.html">Indietro</button>
+  </form>
+
+  <script>
+    document.getElementById('t').value =
+      new URLSearchParams(location.search).get('t') || '';
+  </script>
+</body>
+</html>

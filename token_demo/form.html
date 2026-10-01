@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+  <meta charset="utf-8">
+  <title>Form</title>
+</head>
+
+<body>
+  <div id="out"></div>
+
+  <form id="f" action="step2.html" method="get" hidden>
+    <input type="hidden" name="t" id="t">
+    <button>Invia</button>
+  </form>
+
+  <script>
+    const TTL = 60000;
+    const K = 'tok';
+    const $ = id => document.getElementById(id);
+    const p = new URLSearchParams(location.search).get('t');
+
+    if (location.search.includes('t=')) {
+      // Ritorno da step2: verifica
+      let s = null;
+      try { s = JSON.parse(sessionStorage.getItem(K)); } catch { }
+
+      sessionStorage.removeItem(K); // rimuove le traccie del token precedente
+      history.replaceState(null, '', 'form.html');
+
+      if (!p || !s || p !== s.t) {
+        $('out').textContent = 'FAIL: token diverso o vuoto';
+      } else if (Date.now() - s.ts > TTL) {
+        $('out').textContent = 'FAIL: token scaduto';
+      } else {
+        $('out').textContent = 'OK';
+      }
+    } else {
+      // Nuova apertura: nuovo token
+      const ts = Date.now();
+      const r = crypto.getRandomValues(new Uint8Array(16));
+      const key = crypto.getRandomValues(new Uint8Array(1))[0] | 1;
+
+      // payload = ts + random, XOR con chiave a 1 byte (in testa), poi base64url
+      const hex = [...r].map(b => b.toString(16).padStart(2, '0')).join('');
+      const raw = new TextEncoder().encode(ts + '.' + hex);
+      const t = btoa(String.fromCharCode(key, ...raw.map(b => b ^ key)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      sessionStorage.setItem(K, JSON.stringify({ t, ts }));
+      $('t').value = t;
+      $('f').hidden = false;
+    }
+  </script>
+</body>
+
+</html>
